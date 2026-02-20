@@ -6,7 +6,7 @@ import os
 from flask import Flask, render_template_string, request, Response, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = "seth_koyeb_premium_key"
+app.secret_key = "seth_maruti_industries_key"
 
 # ================= DATABASE SETUP =================
 def init_db():
@@ -17,14 +17,15 @@ def init_db():
         address TEXT, location TEXT, logo TEXT, services TEXT,
         instagram TEXT, linkedin TEXT, whatsapp TEXT)''')
     
+    # Default User (Maruti Industries Detail)
     cursor.execute("SELECT * FROM users WHERE email='seth@gmail.com'")
     if not cursor.fetchone():
         cursor.execute("""INSERT INTO users VALUES (
-            'seth@gmail.com', '123', 'Seth Saawaliya', '+91 9876543210', 
-            'Indore, MP', 'https://maps.google.com', 
+            'seth@gmail.com', '123', 'Maruti Industries', '+91 0000000000', 
+            'Your Business Address Here', 'https://maps.google.com', 
             'https://cdn-icons-png.flaticon.com/512/3135/3135715.png', 
-            'Trading Bot & AI Specialist',
-            'https://instagram.com', 'https://linkedin.com', '919876543210')""")
+            'Industrial Solutions & Services',
+            '#', '#', '910000000000')""")
     conn.commit()
     conn.close()
 
@@ -71,13 +72,19 @@ MOBILE_STYLE = """
 
 # ================= ROUTES =================
 
+# Updated Home Route: Redirects main link to the specific card
+@app.route('/')
+def home():
+    return redirect(url_for('view_card', email='seth@gmail.com'))
+
 @app.route('/card/<email>')
 def view_card(email):
     conn = sqlite3.connect('mobile_card.db'); conn.row_factory = sqlite3.Row
     user = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone(); conn.close()
-    if not user: return "Profile Not Found", 404
+    if not user: return redirect(url_for('home'))
 
-    qr = qrcode.make(request.url)
+    # QR points to the main Koyeb domain instead of long URL
+    qr = qrcode.make(request.host_url)
     buf = io.BytesIO(); qr.save(buf)
     qr_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
 
@@ -145,7 +152,7 @@ def dashboard():
                 <input name="linkedin" value="{user['linkedin']}" placeholder="LinkedIn Link">
                 <input name="location" value="{user['location']}" placeholder="Maps Link">
                 <input name="logo" value="{user['logo']}" placeholder="Logo URL">
-                <input name="services" value="{user['services']}" placeholder="About You">
+                <input name="services" value="{user['services']}" placeholder="Bio">
                 <button type="submit" class="btn btn-primary">Update Profile</button>
             </form>
             <a href="/logout" style="color:red; font-size:12px; display:block; margin-top:10px;">Logout</a>
@@ -163,8 +170,6 @@ def download_vcf(email):
 def logout():
     session.pop('user', None); return redirect(url_for('login'))
 
-# ================= KOYEB DEPLOYMENT LINE =================
 if __name__ == '__main__':
-    # Koyeb automatic PORT select karega, agar nahi mila toh 8000 use karega
     port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port)
