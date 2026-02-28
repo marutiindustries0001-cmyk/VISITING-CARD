@@ -8,7 +8,7 @@ app.secret_key = "maruti_industries_ultra_secret"
 
 # ================= MONGODB SETUP =================
 # Yahan apni MongoDB Connection String dalein
-MONGO_URI = "YOUR_MONGODB_CONNECTION_STRING_HERE"
+MONGO_URI = "mongodb+srv://myvisitingcard01:Gs111994@cluster0.ydu8lor.mongodb.net/?appName=Cluster0"
 client = MongoClient(MONGO_URI)
 db = client['vcard_db']
 users_col = db['users']
