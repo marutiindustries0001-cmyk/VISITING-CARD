@@ -8,28 +8,30 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 
 # =================================================
-# FLASK APP CONFIGURATION
+# 1. FLASK APP CONFIGURATION
 # =================================================
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 # =================================================
-# DATABASE CONNECTION (MONGODB)
+# 2. DATABASE CONNECTION (MONGODB)
 # =================================================
-# Password and URI cleaned from invisible spaces
+# Yahan maine aapka naya password 'Gs111994' daal diya hai
 MONGO_URI = "mongodb+srv://myvisitingcard01:Gs111994@cluster0.ydu8lor.mongodb.net/?appName=Cluster0&tlsAllowInvalidCertificates=true"
 
 try:
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=30000, connectTimeoutMS=30000)
+    # Render ke liye connection timeout ko 45 seconds kar diya hai
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=45000, connectTimeoutMS=45000)
     db = client['vcard_db']
     users_col = db['users']
+    # Check connection immediately
     client.admin.command('ping')
     print("✅ DATABASE: Connected Successfully")
 except Exception as e:
     print(f"❌ DATABASE ERROR: {e}")
     users_col = None
 
-# Admin Setup Function
+# Admin Setup Function (Autostart)
 def ensure_admin():
     if users_col is not None:
         try:
@@ -54,7 +56,7 @@ def ensure_admin():
             print(f"❌ SETUP ERROR: {e}")
 
 # =================================================
-# UI DESIGN (CSS & HTML)
+# 3. UI DESIGN (CSS & HTML)
 # =================================================
 UI_TEMPLATE = """
 <!DOCTYPE html>
@@ -91,7 +93,7 @@ UI_TEMPLATE = """
         .form-area { padding: 20px; text-align: left; }
         .field { margin-bottom: 15px; }
         .field label { display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 5px; }
-        input, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; background: #f8fafc; font-size: 14px; }
+        input, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; background: #f8fafc; font-size: 14px; margin-bottom: 10px; }
         input:focus { border-color: var(--accent); outline: none; }
     </style>
     <title>{{ title }}</title>
@@ -103,7 +105,7 @@ UI_TEMPLATE = """
 """
 
 # =================================================
-# MAIN ROUTES
+# 4. MAIN ROUTES
 # =================================================
 
 @app.route('/')
@@ -168,7 +170,7 @@ def login():
         u = users_col.find_one({"email": request.form['email'], "password": request.form['password']}) if users_col else None
         if u:
             session['uid'] = u['email']
-            session['role'] = u.get('role', 'admin' if u.get('role') == 'admin' else 'user')
+            session['role'] = u.get('role', 'user')
             return redirect(url_for('dashboard'))
         error = "Invalid Credentials!"
 
@@ -177,8 +179,8 @@ def login():
             <i class="fas fa-user-circle" style="font-size:60px; color:#3b82f6; margin-bottom:20px;"></i>
             <h2>Secure Login</h2>
             <form method="POST" style="margin-top:20px;">
-                <input name="email" type="email" placeholder="Email" required style="margin-bottom:10px;">
-                <input name="password" type="password" placeholder="Password" required style="margin-bottom:10px;">
+                <input name="email" type="email" placeholder="Email" required>
+                <input name="password" type="password" placeholder="Password" required>
                 <button type="submit" class="btn btn-main">LOGIN NOW</button>
                 <p style="color:red; margin-top:10px; font-size:12px;">{error}</p>
             </form>
@@ -214,7 +216,7 @@ def dashboard():
             <form method="POST" class="field">
                 <input name="new_name" placeholder="Name" required><input name="new_email" placeholder="Email" required>
                 <input name="new_pass" placeholder="Password" required><input name="new_biz" placeholder="Business" required>
-                <button type="submit" class="btn btn-main" style="margin-top:10px;">CREATE CARD</button>
+                <button type="submit" class="btn btn-main">CREATE CARD</button>
             </form>
             <h3 class="section-title">Managed Cards</h3>{user_list}
         """
@@ -231,7 +233,7 @@ def dashboard():
                 <div class="field"><label>WhatsApp</label><input name="whatsapp" value="{curr.get('whatsapp','')}"></div>
                 <div class="field"><label>Logo URL</label><input name="logo" value="{curr.get('logo','')}"></div>
                 <div class="field"><label>About</label><textarea name="services">{curr.get('services','')}</textarea></div>
-                <div class="field"><label>Products (Comma separated URLs)</label><textarea name="products">{curr.get('products','')}</textarea></div>
+                <div class="field"><label>Products (Image URLs comma separated)</label><textarea name="products">{curr.get('products','')}</textarea></div>
                 <button type="submit" class="btn btn-main">UPDATE MY CARD</button>
             </form>
             {admin_html}
@@ -249,6 +251,10 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# =================================================
+# 5. SERVER RUN (RENDER OPTIMIZED)
+# =================================================
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    # Isse Render ka port automatically detect ho jayega
+    val_port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=val_port, debug=False)
