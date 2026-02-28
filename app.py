@@ -16,11 +16,10 @@ app.secret_key = os.urandom(24)
 # =================================================
 # DATABASE CONNECTION (MONGODB)
 # =================================================
-# YAHAN APNA PASSWORD BHAREIN (No special chars like @ or #)
+# Password and URI cleaned from invisible spaces
 MONGO_URI = "mongodb+srv://myvisitingcard01:Gs111994@cluster0.ydu8lor.mongodb.net/?appName=Cluster0&tlsAllowInvalidCertificates=true"
 
 try:
-    # Render ke liye timeout badha diya gaya hai
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=30000, connectTimeoutMS=30000)
     db = client['vcard_db']
     users_col = db['users']
@@ -70,39 +69,25 @@ UI_TEMPLATE = """
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Poppins', sans-serif; }
         body { background: #cbd5e1; display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 480px; background: var(--bg); min-height: 100vh; box-shadow: 0 0 30px rgba(0,0,0,0.2); position: relative; }
-        
-        /* Header & Profile Section */
         .header-banner { background: linear-gradient(135deg, #1e293b, #0f172a); height: 200px; border-radius: 0 0 40px 40px; position: relative; }
         .profile-container { position: absolute; bottom: -55px; left: 50%; transform: translateX(-50%); text-align: center; width: 100%; }
         .profile-img { width: 120px; height: 120px; border-radius: 50%; border: 5px solid white; object-fit: cover; background: white; box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        
-        /* Content Area */
         .card-content { margin-top: 70px; padding: 20px; text-align: center; }
         .user-name { font-size: 24px; font-weight: 700; color: var(--primary); }
         .biz-label { font-size: 14px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .user-bio { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
-        
-        /* Buttons */
         .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
         .btn { padding: 14px; border-radius: 12px; font-weight: 600; font-size: 14px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; transition: 0.3s; cursor: pointer; }
         .btn-main { background: var(--accent); color: white; grid-column: span 2; box-shadow: 0 5px 15px rgba(59,130,246,0.3); }
         .btn-sub { background: white; color: var(--primary); border: 2px solid #e2e8f0; }
-        
-        /* Social Icons */
         .social-row { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
         .social-btn { width: 45px; height: 45px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-decoration: none; }
-        
-        /* Products Gallery */
         .section-title { text-align: left; font-size: 16px; font-weight: 700; color: var(--primary); margin: 20px 0 10px; border-left: 4px solid var(--accent); padding-left: 10px; }
         .product-scroll { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 15px; }
         .product-item { min-width: 180px; background: white; border-radius: 15px; overflow: hidden; border: 1px solid #eee; }
         .product-img { width: 100%; height: 120px; object-fit: cover; }
-        
-        /* QR Section */
         .qr-box { background: white; padding: 20px; border-radius: 20px; display: inline-block; margin-top: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .qr-image { width: 160px; height: 160px; }
-
-        /* Form Controls */
         .form-area { padding: 20px; text-align: left; }
         .field { margin-bottom: 15px; }
         .field label { display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 5px; }
@@ -132,7 +117,6 @@ def view_card(email):
     if not user:
         return "<h1>User Not Found</h1>", 404
     
-    # 1. UNIQUE QR GENERATION
     card_url = request.url_root.rstrip('/') + url_for('view_card', email=email)
     qr = qrcode.QRCode(box_size=10, border=2)
     qr.add_data(card_url)
@@ -143,7 +127,6 @@ def view_card(email):
     img.save(buf)
     qr_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
 
-    # 2. GALLERY LOGIC
     gallery_html = ""
     if user.get('products'):
         for p_url in user['products'].split(','):
@@ -156,23 +139,19 @@ def view_card(email):
             <h1 class="user-name">{user['name']}</h1>
             <p class="biz-label">{user.get('business_name', 'Maruti Industries')}</p>
             <p class="user-bio">{user.get('services', 'Digital Visiting Card')}</p>
-            
             <div class="social-row">
                 <a href="tel:{user.get('phone', '')}" class="social-btn"><i class="fas fa-phone"></i></a>
                 <a href="https://wa.me/{user.get('whatsapp', '')}" class="social-btn"><i class="fab fa-whatsapp"></i></a>
                 <a href="{user.get('instagram', '#')}" class="social-btn"><i class="fab fa-instagram"></i></a>
                 <a href="{user.get('location', '#')}" class="social-btn"><i class="fas fa-map-marker-alt"></i></a>
             </div>
-
             <div class="action-btns">
                 <a href="/download_vcf/{email}" class="btn btn-main"><i class="fas fa-user-plus"></i> SAVE TO CONTACTS</a>
                 <a href="mailto:{user['email']}" class="btn btn-sub"><i class="fas fa-envelope"></i> EMAIL</a>
                 <a href="https://wa.me/{user.get('whatsapp', '')}?text=Hi" class="btn btn-sub"><i class="fab fa-whatsapp"></i> CHAT</a>
             </div>
-
             <h3 class="section-title">Product Showcase</h3>
             <div class="product-scroll">{gallery_html if gallery_html else 'No products added'}</div>
-
             <h3 class="section-title">Unique Scan QR</h3>
             <div class="qr-box">
                 <img src="data:image/png;base64,{qr_b64}" class="qr-image">
@@ -189,7 +168,7 @@ def login():
         u = users_col.find_one({"email": request.form['email'], "password": request.form['password']}) if users_col else None
         if u:
             session['uid'] = u['email']
-            session['role'] = u.get('role', 'user')
+            session['role'] = u.get('role', 'admin' if u.get('role') == 'admin' else 'user')
             return redirect(url_for('dashboard'))
         error = "Invalid Credentials!"
 
@@ -211,14 +190,12 @@ def dashboard():
     if 'uid' not in session: return redirect(url_for('login'))
     
     if request.method == 'POST':
-        # Admin Action: Create
-        if session['role'] == 'admin' and 'new_email' in request.form:
+        if session.get('role') == 'admin' and 'new_email' in request.form:
             users_col.insert_one({
                 "email": request.form['new_email'], "password": request.form['new_pass'],
                 "name": request.form['new_name'], "role": "user", "business_name": request.form['new_biz']
             })
         
-        # Profile Update
         if 'name' in request.form:
             users_col.update_one({"email": session['uid']}, {"$set": {
                 "name": request.form['name'], "business_name": request.form['business_name'],
@@ -229,14 +206,14 @@ def dashboard():
 
     curr = users_col.find_one({"email": session['uid']})
     admin_html = ""
-    if session['role'] == 'admin':
+    if session.get('role') == 'admin':
         others = list(users_col.find({"role": "user"}))
         user_list = "".join([f"<div style='background:white; padding:10px; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between;'><span>{u['name']}</span><a href='/card/{u['email']}' style='font-size:12px; color:#3b82f6;'>VIEW</a></div>" for u in others])
         admin_html = f"""
             <h3 class="section-title">Create New Unique QR Card</h3>
             <form method="POST" class="field">
-                <input name="new_name" placeholder="Name"><input name="new_email" placeholder="Email">
-                <input name="new_pass" placeholder="Password"><input name="new_biz" placeholder="Business">
+                <input name="new_name" placeholder="Name" required><input name="new_email" placeholder="Email" required>
+                <input name="new_pass" placeholder="Password" required><input name="new_biz" placeholder="Business" required>
                 <button type="submit" class="btn btn-main" style="margin-top:10px;">CREATE CARD</button>
             </form>
             <h3 class="section-title">Managed Cards</h3>{user_list}
@@ -254,7 +231,7 @@ def dashboard():
                 <div class="field"><label>WhatsApp</label><input name="whatsapp" value="{curr.get('whatsapp','')}"></div>
                 <div class="field"><label>Logo URL</label><input name="logo" value="{curr.get('logo','')}"></div>
                 <div class="field"><label>About</label><textarea name="services">{curr.get('services','')}</textarea></div>
-                <div class="field"><label>Products (Image URLs comma separated)</label><textarea name="products">{curr.get('products','')}</textarea></div>
+                <div class="field"><label>Products (Comma separated URLs)</label><textarea name="products">{curr.get('products','')}</textarea></div>
                 <button type="submit" class="btn btn-main">UPDATE MY CARD</button>
             </form>
             {admin_html}
@@ -264,13 +241,14 @@ def dashboard():
 @app.route('/download_vcf/<email>')
 def download_vcf(email):
     u = users_col.find_one({"email": email})
-    vcf = f"BEGIN:VCARD\nVERSION:3.0\nFN:{u['name']}\nORG:{u.get('business_name','')}\nTEL:{u.get('phone','')}\nEMAIL:{u['email']}\nEND:VCARD"
+    vcf = f"BEGIN:VCARD\\nVERSION:3.0\\nFN:{u['name']}\\nORG:{u.get('business_name','')}\\nTEL:{u.get('phone','')}\\nEMAIL:{u['email']}\\nEND:VCARD"
     return Response(vcf, mimetype="text/vcard", headers={"Content-disposition": f"attachment; filename={u['name']}.vcf"})
 
 @app.route('/logout')
 def logout():
-    session.clear(); return redirect(url_for('login'))
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    p = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=p)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
