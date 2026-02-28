@@ -17,7 +17,7 @@ app.secret_key = os.urandom(24)
 # DATABASE CONNECTION (MONGODB)
 # =================================================
 # YAHAN APNA PASSWORD BHAREIN (No special chars like @ or #)
-MONGO_URI = "mongodb+srv://myvisitingcard01:APNA_PASSWORD_YAHAN@cluster0.ydu8lor.mongodb.net/?appName=Cluster0&tlsAllowInvalidCertificates=true"
+MONGO_URI = "mongodb+srv://myvisitingcard01:Gs111994@cluster0.ydu8lor.mongodb.net/?appName=Cluster0&tlsAllowInvalidCertificates=true"
 
 try:
     # Render ke liye timeout badha diya gaya hai
