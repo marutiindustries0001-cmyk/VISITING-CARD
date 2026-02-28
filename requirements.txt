@@ -1,4 +1,6 @@
 flask
+pymongo
+dnspython
 qrcode
 pillow
 gunicorn
